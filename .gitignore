@@ -1,0 +1,55 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Node.js and frontend build files
+node_modules/
+dist/
+.vite/
+coverage/
+
+# Datasets and transferred data
+dataset/
+cloud_transfer/
+*.zip
+
+# Model checkpoints and generated training outputs
+*.pt
+*.pth
+*.ckpt
+*.onnx
+ai-service/outputs/
+
+# Logs and temporary files
+*.log
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+
+# Local project inventory
+project_inventory.txt
+
+
+# Generated dataset audits, manifests, and diagnostic visuals
+ai-service/data/
+
+# Backup scripts
+*.bak
