@@ -18,6 +18,14 @@ from backend.app.classification_service import (
 )
 
 from backend.app.gradcam_service import generate_gradcam
+from backend.app.gemini_service import (
+    GeminiAnalysisRequest,
+    GeminiExplanation,
+    GeminiInvalidResponseError,
+    GeminiNotConfiguredError,
+    GeminiProviderError,
+    generate_gemini_explanation,
+)
 
 # Project paths
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -367,3 +375,15 @@ async def gradcam_mri(file: UploadFile = File(...)):
 
     finally:
         await file.close()
+
+
+@app.post("/api/gemini-explanation", response_model=GeminiExplanation)
+async def gemini_explanation(request: GeminiAnalysisRequest):
+    try:
+        return generate_gemini_explanation(request)
+    except GeminiNotConfiguredError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from None
+    except GeminiInvalidResponseError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from None
+    except GeminiProviderError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from None

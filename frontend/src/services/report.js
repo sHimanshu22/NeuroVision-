@@ -80,6 +80,7 @@ export async function downloadAnalysisReport(state = {}) {
     row("Status", "Completed");
     row("Predicted class", state.classification.predicted_class);
     row("Confidence", percentage(state.classification.confidence));
+    paragraph(`A label such as "pituitary" is only the AI model's predicted category. It does not confirm a pituitary tumor or any disease. Model confidence is not the probability that a person has a disease.`);
     const probabilities = state.classification.class_probabilities;
     if (probabilities && Object.keys(probabilities).length) {
       row("Class probabilities", "Listed below");
@@ -104,6 +105,7 @@ export async function downloadAnalysisReport(state = {}) {
     if (warning) {
       paragraph(`Warning: ${warning}`, { color: [148, 101, 27] });
     }
+    paragraph("Segmentation highlights pixels selected by the model. Foreground-pixel counts are technical details; they do not show tumor size or location. A sparse or empty mask is inconclusive and does not prove that a tumor is absent.");
   }
 
   heading("Grad-CAM");
@@ -113,11 +115,12 @@ export async function downloadAnalysisReport(state = {}) {
     row("Status", "Completed");
     row("Predicted class", state.gradcam.predicted_class);
     row("Confidence", percentage(state.gradcam.confidence));
-    paragraph("Grad-CAM highlights image regions that influenced the classifier prediction.");
+    paragraph("Grad-CAM highlights image regions that influenced the AI classification. These regions are not proof of a tumor location and do not prove that the prediction is correct.");
   }
 
   heading("Limitations and disclaimer");
-  paragraph("NeuroVision is an educational/research prototype. Model outputs may be incorrect and are not medical diagnoses. Segmentation results are thresholded model predictions, not ground-truth or clinical boundaries. Grad-CAM highlights model attention and does not establish causation or diagnosis.");
+  paragraph("What to do next: Consult a qualified doctor or radiologist who can review the full MRI, official radiology report, symptoms, and medical history. Do not make medical decisions based on NeuroVision alone.");
+  paragraph("NeuroVision is an educational/research prototype, not a clinical diagnostic tool. Model outputs may be incorrect. Segmentation results are thresholded model predictions, not ground-truth or clinical boundaries.");
 
   const pageCount = doc.getNumberOfPages();
   for (let page = 1; page <= pageCount; page += 1) {

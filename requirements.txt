@@ -6,3 +6,5 @@ torchvision
 Pillow
 numpy
 scikit-learn
+python-dotenv
+google-genai
