@@ -10,6 +10,15 @@ from PIL import Image, UnidentifiedImageError
 from torchvision.transforms import InterpolationMode
 from torchvision.transforms import functional as TF
 
+from backend.app.classification_service import (
+    predict_classification,
+    load_classifier,
+    classifier,
+    classifier_load_error,
+)
+
+from backend.app.gradcam_service import generate_gradcam
+
 # Project paths
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 AI_SCRIPTS = PROJECT_ROOT / "ai-service" / "scripts"
@@ -237,5 +246,124 @@ async def segment_mri(file: UploadFile = File(...)):
             status_code=500,
             detail="Segmentation failed. Check the backend terminal.",
         )
+    finally:
+        await file.close()
+
+@app.post("/api/classify")
+async def classify_mri(file: UploadFile = File(...)):
+    if file.content_type and not file.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400,
+            detail="Upload an image file.",
+        )
+
+    try:
+        contents = await file.read(MAX_UPLOAD_BYTES + 1)
+
+        if not contents:
+            raise HTTPException(
+                status_code=400,
+                detail="The file is empty.",
+            )
+
+        if len(contents) > MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail="Image must be 10 MB or smaller.",
+            )
+
+        with Image.open(io.BytesIO(contents)) as uploaded_image:
+            image = uploaded_image.copy()
+
+        result = predict_classification(image)
+
+        return {
+            "success": True,
+            "filename": file.filename,
+            **result,
+            "notice": (
+                "Research prototype only. This output is not "
+                "a medical diagnosis."
+            ),
+        }
+
+    except RuntimeError as exc:
+        print(f"Classification error: {exc}")
+        raise HTTPException(
+            status_code=503,
+            detail="Classification model is not ready.",
+        )
+
+    except (UnidentifiedImageError, OSError, ValueError):
+        raise HTTPException(
+            status_code=400,
+            detail="Could not read this image. Please upload a valid image.",
+        )
+
+    except Exception as exc:
+        print(f"Classification inference error: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail="Classification failed. Check the backend terminal.",
+        )
+
+    finally:
+        await file.close()
+
+
+@app.post("/api/gradcam")
+async def gradcam_mri(file: UploadFile = File(...)):
+    if file.content_type and not file.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400,
+            detail="Upload an image file.",
+        )
+
+    try:
+        contents = await file.read(MAX_UPLOAD_BYTES + 1)
+
+        if not contents:
+            raise HTTPException(
+                status_code=400,
+                detail="The file is empty.",
+            )
+
+        if len(contents) > MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail="Image must be 10 MB or smaller.",
+            )
+
+        with Image.open(io.BytesIO(contents)) as uploaded_image:
+            image = uploaded_image.copy()
+
+        result = generate_gradcam(image)
+
+        return {
+            "success": True,
+            "filename": file.filename,
+            **result,
+        }
+
+    except RuntimeError as exc:
+        print(f"Grad-CAM error: {exc}")
+        raise HTTPException(
+            status_code=503,
+            detail="Grad-CAM model is not ready.",
+        )
+
+    except (UnidentifiedImageError, OSError, ValueError):
+        raise HTTPException(
+            status_code=400,
+            detail="Could not read this image. Please upload a valid image.",
+        )
+
+    except Exception as exc:
+        print(f"Grad-CAM inference error: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail="Grad-CAM generation failed. Check the backend terminal.",
+        )
+
     finally:
         await file.close()
